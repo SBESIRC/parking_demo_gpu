@@ -1,6 +1,6 @@
 import math
 import numpy as np
-import pyphysx as px
+from .pkphysx import pkphysx as px
 import pygame as pg
 
 
@@ -87,3 +87,5 @@ class Balancer:
         # The lane
         self.__init_lanes__(lane, config)
 
+    def run(self):
+        pass
