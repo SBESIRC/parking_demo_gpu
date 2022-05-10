@@ -1,0 +1,33 @@
+{
+    "lane_width": 5500,
+    "vertical_spot": {
+        "x": 300,
+        "y": 200,
+        "width": 2400,
+        "height": 5100
+    },
+    "paralleled_spot": {
+        "x": 0,
+        "y": 0,
+        "width": 6000,
+        "height": 2400
+    },
+    "sampling_interval": 2400,
+    "sampling_rate": 0.25,
+    "query_range": 50000,
+    "spot_attract_range": 1000,
+    "remove_threshold": {
+        "force": 1500,
+        "torque": 100,
+        "sin": 0.4
+    },
+    "force_rate": {
+        "r": 50,
+        "spots": 0.5
+    },
+    "shake_impulse": 5,
+    "vibrate_speed": 50,
+    "random_descent": {
+        "r": 0.3
+    }
+}
