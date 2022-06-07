@@ -6,6 +6,9 @@ def __round_to(x, d=4, half=.5):
     return (int(x[0] * d + half) / d, int(x[1] * d + half) / d)
 
 def __calc_lane(lanes, origin, lane_filename=None):
+    """@returns: vertices, edges
+    vertices: [{'id':int, 'pinned':bool, 'location':list(2)}],
+    edges: [{'endings':[int, int], 'is_user_defined':bool, 'distortable':bool}]}}]}"""
     # print(lanes)
     nodes_dict = {}
     nodes = []

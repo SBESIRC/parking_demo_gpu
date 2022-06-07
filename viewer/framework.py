@@ -1,4 +1,4 @@
-import pyphysx as px
+import pkphysx as px
 import numpy as np
 
 class FrameworkBase:
