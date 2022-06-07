@@ -30,4 +30,18 @@ class FrameworkBase:
     def __reset(self):
         """ Reset all of the variables to their starting values.
         Not to be called except at initialization."""
-        
+
+from viewer import backends
+from viewer.settings import fwSettings
+
+try:
+    framework_name = '%s_framework' % (fwSettings.backend.lower())
+    __import__('backends', globals(), fromlist=[framework_name], level=1)
+    framework_module = getattr(backends, framework_name)
+    Framework = getattr(framework_module,
+                        '%sFramework' % fwSettings.backend.capitalize())
+except Exception as ex:
+    print('Unable to import the back-end %s: %s' % (fwSettings.backend, ex))
+    print('Attempting to fall back on the pygame back-end.')
+
+    from viewer.backends.pygame_framework import PygameFramework as Framework
