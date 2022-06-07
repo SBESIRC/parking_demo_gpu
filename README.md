@@ -7,7 +7,7 @@ clone and cd into this repo;
 ```bash
 $ git submodule init
 $ git submodule update
-$ cd parking; PYMODE=debug pip install -e . ; cd ..
+$ cd parking/pkphysx; PYMODE=debug pip install -e . ; cd ..
 $ python test.py
 ```
 
