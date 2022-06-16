@@ -43,6 +43,7 @@ class Theme:
         self.config = {}
         self._loaded = []
         self.cache = {}
+        print("Theme:{}".format(dirs))
         self._preload(dirs)
         pygame.font.init()
     
@@ -72,6 +73,7 @@ class Theme:
         dnames.append(os.path.join(os.path.dirname(__file__),"..","..","..","..","..","share","pgu","themes",name))
         dnames.append(os.path.join(os.path.dirname(__file__),"..","..","share","pgu","themes",name)) 
         for dname in dnames:
+            print(dname)
             if os.path.isdir(dname): break
         if not os.path.isdir(dname): 
             raise Exception('could not find theme '+name)

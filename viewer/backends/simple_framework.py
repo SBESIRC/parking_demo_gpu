@@ -43,7 +43,7 @@ from Box2D.b2 import (world, staticBody, dynamicBody, kinematicBody,
                       polygonShape, circleShape, edgeShape, loopShape)
 
 TARGET_FPS = 60
-PPM = 10.0
+PPM = 10.0  # scale
 TIMESTEP = 1.0 / TARGET_FPS
 VEL_ITERS, POS_ITERS = 10, 10
 SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
@@ -56,19 +56,29 @@ colors = {
 
 
 def fix_vertices(vertices):
+    """ 
+    vertices:list
+    从“以左上角为原点，y轴向下”的坐标系转为“屏幕中心的坐标系”
+    """
     return [(int(SCREEN_OFFSETX + v[0]), int(SCREEN_OFFSETY - v[1])) for v in vertices]
 
 
 def _draw_polygon(polygon, screen, body, fixture):
+    """
+    绘制polygon
+    """
     transform = body.transform
     vertices = fix_vertices([transform * v * PPM for v in polygon.vertices])
     pygame.draw.polygon(
-        screen, [c / 2.0 for c in colors[body.type]], vertices, 0)
-    pygame.draw.polygon(screen, colors[body.type], vertices, 1)
+        screen, [c / 2.0 for c in colors[body.type]], vertices, 0)  # width=0
+    pygame.draw.polygon(screen, colors[body.type], vertices, 1) # width=1
 polygonShape.draw = _draw_polygon
 
 
 def _draw_circle(circle, screen, body, fixture):
+    """
+    绘制circle
+    """
     position = fix_vertices([body.transform * circle.pos * PPM])[0]
     pygame.draw.circle(screen, colors[body.type],
                        position, int(circle.radius * PPM))
@@ -76,6 +86,9 @@ circleShape.draw = _draw_circle
 
 
 def _draw_edge(edge, screen, body, fixture):
+    """
+    绘制edge
+    """
     vertices = fix_vertices(
         [body.transform * edge.vertex1 * PPM, body.transform * edge.vertex2 * PPM])
     pygame.draw.line(screen, colors[body.type], vertices[0], vertices[1])
@@ -83,6 +96,9 @@ edgeShape.draw = _draw_edge
 
 
 def _draw_loop(loop, screen, body, fixture):
+    """
+    绘制连续多线段
+    """
     transform = body.transform
     vertices = fix_vertices([transform * v * PPM for v in loop.vertices])
     v1 = vertices[-1]
@@ -115,7 +131,7 @@ framework.Keys = Keys
 
 
 class SimpleFramework(object):
-    name = 'None'
+    name = 'TH'
     description = ''
 
     def __init__(self):

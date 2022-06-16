@@ -181,10 +181,11 @@ class Balancer:
                 # lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), (-axis/4, q))
                 # lane_joint2 = px.D6Joint(v2, lane_actor, (np.zeros_like(loc2), q), (axis/4, q))
                 # TODO: 基本确定是joint冲突的问题
-                lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), [-axis_len/2, 0, 0])
-                lane_joint2 = px.D6Joint(v2, lane_actor, (np.zeros_like(loc2), q), [axis_len/2, 0, 0])
-                lane_joint1.set_motion(px.D6Axis.X, px.D6Motion.FREE)
-                lane_joint2.set_motion(px.D6Axis.X, px.D6Motion.FREE)
+                # lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), [-axis_len/2, 0, 0])
+                # lane_joint2 = px.D6Joint(v2, lane_actor, (np.zeros_like(loc2), q), [axis_len/2, 0, 0])
+                # lane_joint1.set_motion(px.D6Axis.X, px.D6Motion.FREE)
+                # lane_joint2.set_motion(px.D6Axis.X, px.D6Motion.FREE)
+
                 # lane_joint1.set_kinemic_projection(True, tolerance=1)
                 # lane_joint2.set_kinemic_projection(True, tolerance=1)
             else:
@@ -201,7 +202,7 @@ class Balancer:
 
         num_cpus = 4
         scene_flags = [px.SceneFlag.ENABLE_CCD]
-        px.Physics.set_num_cpu(num_cpus)
+        # px.Physics.set_num_cpu(num_cpus)
         self.scene = px.Scene(scene_flags=scene_flags) if not use_gpu else px.Scene(
             scene_flags=[*scene_flags, px.SceneFlag.ENABLE_PCM, px.SceneFlag.ENABLE_GPU_DYNAMICS, px.SceneFlag.ENABLE_STABILIZATION],
             broad_phase_type=px.BroadPhaseType.GPU,

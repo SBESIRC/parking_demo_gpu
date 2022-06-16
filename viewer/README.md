@@ -11,11 +11,29 @@
   - `/backends/`: 正常而言应该只涉及具体的gui框架，但在`pybox2d`的实现中其中的`_framework`代码对`pybox2d`库有依赖，须手动替换为`pkphysx`中的对应元素。暂时不清楚是否存在更深的耦合。
   - 杂项: 均为继承Framework的示范，可以用来参考`test_viewer.py`的写法
 
+|              | 描述                            | 依赖                                                         | 参考                                                         |
+| ------------ | ------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| framework.py | 实现`FrameworkBase`             | 与物理引擎耦合                                               | `pkphysx`中的`pyphysx_render/pyrender_base.py`里的`PyRenderBase.update`中处理`PhysX actor`的方式；`FrameworkBase`中的`self.world`基本可以替换为`pkphysx`中的`Scene`类型。 |
+| settings.py  | GUI的一些设置，可以直接引入     |                                                              |                                                              |
+| pgu          | pygame的窗口设置，可以直接引入  |                                                              |                                                              |
+| backends     | 正常而言应该只涉及具体的gui框架 | `pybox2d`的实现中其中的`_framework`代码对`pybox2d`库有依赖，须手动替换为`pkphysx`中的对应元素 |                                                              |
+
+1. 先看ours代码结构
+
+2. 看box2d结构
+3. physx结构
+
 ## 已知的对应关系
 
 - `b2world`: `pkphysx.Scene`
-  - `?`: `?`
-
+  - World()
+  - Step(TIMESTEP, VEL_ITERS, POS_ITERS)
+  - self.world.ClearForces()
+  - self.world.contactListener = None
+  - self.world.destructionListener = None
+  - self.world.renderer = None
+- groundbody
+  - world.CreateBody()
 
 ## 测试方法
 在`viewer/test_viewer.py`的`test_viewer(ns)`中编写测试代码，

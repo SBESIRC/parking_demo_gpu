@@ -1,6 +1,8 @@
 import dataloader
 import argparse
-from viewer import Framework
+from parking import balancing
+from viewer.backends.park_framework import ParkFramework
+from viewer.backends.old_framework import OldFramework
 
 def test_viewer(ns: argparse.Namespace):
     filename = ns.file
@@ -12,6 +14,8 @@ def test_viewer(ns: argparse.Namespace):
     
     
     # print(origin, wall, outer_bound, lane)
-    # balancer = balancing.Balancer(outer_bound, wall, lane, config)
+    balancer = balancing.Balancer(outer_bound, wall, lane, config)
+    my_viewer = OldFramework(balancer)
+    my_viewer.run()
     # balancer.run()
 
