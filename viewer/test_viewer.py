@@ -15,7 +15,7 @@ def test_viewer(ns: argparse.Namespace):
     
     # print(origin, wall, outer_bound, lane)
     balancer = balancing.Balancer(outer_bound, wall, lane, config)
-    my_viewer = OldFramework(balancer)
+    my_viewer = ParkFramework(balancer)
     my_viewer.run()
     # balancer.run()
 
