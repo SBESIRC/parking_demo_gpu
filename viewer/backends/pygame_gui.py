@@ -93,6 +93,7 @@ class fwGUI(gui.Table):
         for slider in sliders:
             name=slider['name']
             setattr(settings, name, int(self.form[name].value))
+            
 
         # If we're in single-step mode, update the GUI to reflect that.
         if settings.singleStep:
