@@ -9,6 +9,7 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--file', type=str, default='data/test/1.geojson')
     parser.add_argument('-j', '--dump_lane', type=bool, default=False)
     parser.add_argument('-c', '--config', type=str, default='data/config.json')
+    parser.add_argument("--fwsettings", nargs="*", default=[])
 
     ns = parser.parse_args()
     ns.file = os.path.abspath(ns.file.replace('\\', '/'))
@@ -16,5 +17,6 @@ if __name__ == "__main__":
     if ns.test == 'test':
         test(ns)
     elif ns.test == 'viewer':
+        sys.argv = [sys.argv[0]] + ns.fwsettings
         from viewer.test_viewer import test_viewer
         test_viewer(ns)

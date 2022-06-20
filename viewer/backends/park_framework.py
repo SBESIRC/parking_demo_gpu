@@ -44,7 +44,12 @@ from pyphysx_utils.rate import Rate
 import pkphysx as px
 from pkphysx import (RigidActor, RigidDynamic, RigidStatic, GeometryType)
 import numpy as np
+import quaternion
 from ..settings import fwSettings
+from parking.UserData import *
+from parking.utils import *
+
+from .park_render import ParkRender
 
 TARGET_FPS = 60
 # PPM = 2.0  # scale
@@ -60,163 +65,8 @@ except Exception as ex:
     print('(%s) %s' % (ex.__class__.__name__, ex))
     GUIEnabled = False
 
-class ParkAABB():
-    def __init__(self,lowerBound,upperBound):
-        self.lowerBound=lowerBound
-        self.upperBound=upperBound
-
-class ParkRender(object):
-
-    colors = {
-        "RigidStatic": (255, 255, 255, 255),
-        "RigidDynamic": (127, 127, 127, 255),
-        "RigidActor": (127, 127, 230, 255),
-        "LMouse": (255, 0, 0, 255),
-        "RMouse": (0, 255, 0, 255)
-    }
-
-    def __init__(self, screen_width, screen_height, viewCenter, viewZoom):
-        self.SCREEN_WIDTH = screen_width
-        self.SCREEN_HEIGHT = screen_height
-        self.viewCenter = viewCenter
-
-        self.PPM = viewZoom
-        self.mouse_p = None
-
-        self.SCREEN_OFFSETX, self.SCREEN_OFFSETY = self.SCREEN_WIDTH * 1.0 / 2 - \
-            self.viewCenter[0]*self.PPM, self.SCREEN_HEIGHT * \
-            1.0/2+self.viewCenter[1]*self.PPM
-
-    def updatePPM(self, viewZoom):
-        self.PPM = viewZoom
-        self.updateOffset()
-
-    def updateCenter(self, center):
-        self.viewCenter = center
-        self.updateOffset()
-
-    def setOffset(self, offset):
-        self.SCREEN_OFFSETX = offset[0]
-        self.SCREEN_OFFSETY = offset[1]
-
-    def updateOffset(self):
-        self.SCREEN_OFFSETX = self.SCREEN_WIDTH * \
-            1.0 / 2-self.viewCenter[0]*self.PPM
-        self.SCREEN_OFFSETY = self.SCREEN_HEIGHT * \
-            1.0/2+self.viewCenter[1]*self.PPM
-
-    def fix_vertices(self, vertices):
-        """ 
-        vertices:list(tuple)
-        world->screen
-        """
-        return [(int(self.SCREEN_OFFSETX + self.PPM*v[0]), int(self.SCREEN_OFFSETY - self.PPM*v[1])) for v in vertices]
-        # return [(int(self.SCREEN_OFFSETX + self.PPM*(v[0]-self.viewCenter[0])), int(self.SCREEN_OFFSETY - self.PPM*(v[1]-self.viewCenter[1]))) for v in vertices]
-
-    def _draw_test(self, screen):
-        v = ([10, 10], [10, 20], [20, 20], [20, 10])
-        pygame.draw.polygon(screen, (255, 0, 0, 255), v, 1)
-
-        v = ([700, 500], [710, 500], [710, 510], [700, 510])
-        pygame.draw.polygon(screen, (0, 255, 0, 255), v, 1)
-
-    def _draw_mouse_motion(self, point, screen, flag="LMouse"):
-
-        if point is None:
-            return
-        offset_x, offset_y = 1, 1
-
-        origin_vertices = ([point[0]+offset_x, point[1]+offset_y],
-                           [point[0]+offset_x, point[1]-offset_y],
-                           [point[0]-offset_x, point[1]-offset_y],
-                           [point[0]-offset_x, point[1]+offset_y])
-        vertices = self.fix_vertices(origin_vertices)
-
-        # vertices=origin_vertices
-        pygame.draw.polygon(
-            screen, [c / 2.0 for c in self.colors[flag]], vertices, 0)  # width=0
-        pygame.draw.polygon(screen, self.colors[flag], vertices, 1)  # width=1
-
-    def _draw_box(self, box, screen, actor, flag):
-        """
-        绘制box
-        """
-        global_pose = actor.get_global_pose()
-        offset_x = global_pose[0][0]
-        offset_y = global_pose[0][1]
-
-        vs = box.get_box_half_extents()
-        origin_vertices = ([vs[0]+offset_x, vs[1]+offset_y],
-                           [vs[0]+offset_x, -vs[1]+offset_y],
-                           [-vs[0]+offset_x, -vs[1]+offset_y],
-                           [-vs[0]+offset_x, vs[1]+offset_y])
-        vertices = self.fix_vertices(origin_vertices)
-
-        # vertices=origin_vertices
-        pygame.draw.polygon(
-            screen, [c / 2.0 for c in self.colors[flag]], vertices, 0)  # width=0
-        pygame.draw.polygon(screen, self.colors[flag], vertices, 1)  # width=1
-
-    def _draw_mesh(self, mesh, screen, actor, flag):
-        global_pose = actor.get_global_pose()
-        offset_x = global_pose[0][0]
-        offset_y = global_pose[0][1]
-        # print("draw mesh-global:")
-        # print(offset_x)
-
-        faces = mesh.get_shape_data()
-        face_num = faces.shape[0]
-
-        for i in range(face_num):
-            # print(faces[i])
-            v1 = (faces[i][0]+offset_x, faces[i][1]+offset_y)
-            v2 = (faces[i][3]+offset_x, faces[i][4]+offset_y)
-            v3 = (faces[i][6]+offset_x, faces[i][7]+offset_y)
-
-            origin_vertices = (v1, v2, v3)
-            vertices = self.fix_vertices(origin_vertices)
-            # vertices=origin_vertices
-            # print(vertices)
-            pygame.draw.polygon(screen, self.colors[flag], vertices, 1)
-
-    def draw_scene(self, screen, balancer):
-        # Draw the world
-
-        scene = balancer.scene
-        # self._draw_test(screen)
-        self._draw_mouse_motion(self.mouse_p, screen, "RMouse")
-        actors = scene.get_static_rigid_actors()
-
-        for one_actor in actors:
-            shapes = one_actor.get_atached_shapes()
-            # print("shape size:{}".format(len(shapes)))
-            for one_shape in shapes:
-                geo_type = one_shape.get_geometry_type()
-                if geo_type == GeometryType.BOX:
-                    self._draw_box(one_shape, screen, one_actor, "RigidStatic")
-                elif geo_type == GeometryType.TRIANGLEMESH:
-                    self._draw_mesh(one_shape, screen,
-                                    one_actor, "RigidStatic")
-                else:
-                    pass
-                    # print(geo_type)
-
-        actors = scene.get_dynamic_rigid_actors()
-        for one_actor in actors:
-            shapes = one_actor.get_atached_shapes()
-            # print("shape size:{}".format(len(shapes)))
-            for one_shape in shapes:
-                geo_type = one_shape.get_geometry_type()
-                if geo_type == GeometryType.BOX:
-                    self._draw_box(one_shape, screen,
-                                   one_actor, "RigidDynamic")
-                elif geo_type == GeometryType.TRIANGLEMESH:
-                    self._draw_mesh(one_shape, screen,
-                                    one_actor, "RigidDynamic")
-                else:
-                    pass
-                    # print(geo_type)
-
+class AnchorUserData(metaclass=UserDataMeta):
+    pass
 
 class Keys(object):
     pass
@@ -236,8 +86,29 @@ class ParkFramework(object):
     def __init__(self, balancer):
         self.view_balancer = balancer
         self.settings = fwSettings
+
         self.mouseJoint = None
+        aabb_material = px.Material(static_friction=1, dynamic_friction=1, restitution=0.1)
+        self.aabb_shape = px.Shape.create_box((1,1,1), aabb_material, is_exclusive=False)   # 用于检测overlap
+        self.aabb_shape.setup_simulation_filtering(0,0)
+        self.aabb_actor = px.RigidDynamic() # 用于检测overlap
+        self.aabb_actor.attach_shape(self.aabb_shape)
+        
+        aabb_data = AnchorUserData(self.aabb_actor, Id=0, descp="aabb")
+        self.aabb_actor.set_user_data(aabb_data)
+        # print(aabb_actor.get_user_data().Type)
+        self.mouseActor = px.RigidDynamic() # 鼠标点
+        mouse_data = AnchorUserData(self.mouseActor, Id=0, descp="mouse")
+        self.mouseActor.set_user_data(mouse_data)
+        # self.mouseActor.set_rigid_body_flag(px.RigidBodyFlag.KINEMATIC, True)
+        self.view_balancer.scene.add_actor(self.mouseActor)
+
+        self.selectedActor = None
+        self.mouseClickCnt = 0  # 左键点击计数
+        
+        self.lMouseDown = False
         self.rMouseDown = False
+        
 
         self._viewZoom = 2.0
         self._viewOffset = None
@@ -258,7 +129,7 @@ class ParkFramework(object):
         self.screenSize = (SCREEN_WIDTH, SCREEN_HEIGHT)
         self.font = pygame.font.Font(None, 15)
         self.render = ParkRender(
-            SCREEN_WIDTH, SCREEN_HEIGHT, self.viewCenter, self.viewZoom)
+            SCREEN_WIDTH, SCREEN_HEIGHT, self.viewCenter, self.viewZoom, framework=self)
 
         if GUIEnabled:
             self.gui_app = gui.App()
@@ -322,11 +193,11 @@ class ParkFramework(object):
             elif event.type == MOUSEBUTTONDOWN:
                 p = self.ConvertScreenToWorld(*event.pos)
                 if event.button == 1:  # left
+                    self.lMouseDown = True
                     mods = pygame.key.get_mods()
                     if mods & KMOD_LSHIFT:
                         self.ShiftMouseDown(p)
                     else:
-                        
                         self.MouseDown(p)
                 elif event.button == 2:  # middle
                     pass
@@ -338,20 +209,25 @@ class ParkFramework(object):
                     self.viewZoom /= 1.1
             elif event.type == MOUSEBUTTONUP:
                 p = self.ConvertScreenToWorld(*event.pos)
+                self.render.mouse_p = None # 追踪一下鼠标点在哪儿，画出来，为None时不画
                 if event.button == 3:  # right
                     self.rMouseDown = False
-                    self.render.mouse_p = None # 追踪一下鼠标点在哪儿，画出来，为None时不画
                 else:
+                    self.lMouseDown = False
                     self.MouseUp(p)
             elif event.type == MOUSEMOTION:
                 p = self.ConvertScreenToWorld(*event.pos)
 
                 self.MouseMove(p)
-
+                
                 if self.rMouseDown:
-                    self.viewCenter = (self.viewCenter[0]+event.rel[0] /
+                    self.render.mouse_p = p # 追踪一下鼠标点在哪儿，画出来，为None时不画
+                    self.viewCenter = (self.viewCenter[0]-event.rel[0] /
                                        5.0, self.viewCenter[1]+event.rel[1] / 5.0)
-
+                    self.render.mouse_p_flag="RMouse"
+                    
+                if self.lMouseDown:
+                    self.render.mouse_p_flag="LMouse"
                     self.render.mouse_p = p # 追踪一下鼠标点在哪儿，画出来，为None时不画
 
             if GUIEnabled:
@@ -379,16 +255,19 @@ class ParkFramework(object):
             # Check keys that should be checked every loop (not only on initial
             # keydown)
             self.CheckKeys()
-
+            rate.frequency=self.settings.hz # FIXME:频率
             # Run the simulation loop
             # self.SimulationLoop()
             if GUIEnabled:
                 self.gui_table.updateSettings(self.settings)
+            # update the scene
             if self.settings.pause:
                 self.view_balancer.update(0)    # PAUSE
             else:
                 self.view_balancer.update(rate.period())
-            self.render.draw_scene(self.screen, self.view_balancer)
+            print(self.settings.hz)
+            # render！
+            self.render.draw_scene(self.screen, self.view_balancer) 
 
             if GUIEnabled and self.settings.drawMenu:
                 self.gui_app.paint(self.screen)
@@ -445,9 +324,9 @@ class ParkFramework(object):
         pygame.event.pump()
         self.keys = keys = pygame.key.get_pressed()
         if keys[Keys.K_LEFT]:
-            self.viewCenter = (self.viewCenter[0]-1, self.viewCenter[1])
-        elif keys[Keys.K_RIGHT]:
             self.viewCenter = (self.viewCenter[0]+1, self.viewCenter[1])
+        elif keys[Keys.K_RIGHT]:
+            self.viewCenter = (self.viewCenter[0]-1, self.viewCenter[1])
 
         if keys[Keys.K_UP]:
             self.viewCenter = (self.viewCenter[0], self.viewCenter[1]-1)
@@ -491,35 +370,78 @@ class ParkFramework(object):
 
         # Create a mouse joint on the selected body (assuming it's dynamic)
         # Make a small box.
-        aabb = ParkAABB(lowerBound=(p[0]-0.001, p[1]-0.001),
-                      upperBound= (p[0]+0.001, p[1]+0.001))
 
-        # Query the world for overlapping shapes.
-        # query = fwQueryCallback(p)
-        # self.world.QueryAABB(query, aabb)
+        loc = np.array([p[0],p[1], 0], dtype=np.float64)
 
-        # if query.fixture:
-        #     body = query.fixture.body
-        #     # A body was selected, create the mouse joint
-        #     self.mouseJoint = self.world.CreateMouseJoint(
-        #         bodyA=self.groundbody,
-        #         bodyB=body,
-        #         target=p,
-        #         maxForce=1000.0 * body.mass)
-        #     body.awake = True
+
+        #joint = px.D6Joint(self.mouseActor, loc)
+        #joint.set_motion(px.D6Axis.X, px.D6Motion.FREE)
+        #joint.set_motion(px.D6Axis.Y, px.D6Motion.FREE)
+        #joint.set_motion(px.D6Axis.SWING2, px.D6Motion.FREE)
+        #joint.set_kinemic_projection(flag=True, tolerance=0.1)
+        #self.view_balancer.scene.add_actor(aabb_actor)
+
+        scene=self.view_balancer.scene
+        actors = scene.get_dynamic_rigid_actors()
+        
+        i=0
+        for actor in actors:
+            if actor.get_user_data().Type=="Anchor" :
+                print("this is aabb actor:{}".format(i))
+                continue
+            query=actor.overlaps(self.aabb_actor)
+            if query:
+                self.selectedActor=actor
+                self.render.selectedIndex=i
+
+                loc1, _ = actor.get_global_pose()
+                loc2, _ = self.mouseActor.get_global_pose()
+                axis = loc2 - loc1
+                print(axis)
+                axis_len = np.linalg.norm(axis, 2)
+                u_axis = axis / axis_len
+
+                matrix = np.array([
+                    [u_axis[0], -u_axis[1], 0],
+                    [u_axis[1], u_axis[0], 0],
+                    [0, 0, 1]], dtype=np.float64)
+                q = quaternion.from_rotation_matrix(matrix)
+                self.mouseJoint=px.D6Joint(self.mouseActor, actor, ((0,0,0), q), ((0,0,0), q)) # local poses
+                self.mouseJoint.set_motion(px.D6Axis.X, px.D6Motion.FREE)
+                self.mouseJoint.set_motion(px.D6Axis.Y, px.D6Motion.FREE)
+                self.mouseJoint.set_motion(px.D6Axis.Z, px.D6Motion.FREE)
+                self.mouseJoint.set_motion(px.D6Axis.SWING1, px.D6Motion.FREE)
+                self.mouseJoint.set_motion(px.D6Axis.SWING2, px.D6Motion.FREE)
+                self.mouseJoint.set_motion(px.D6Axis.TWIST, px.D6Motion.FREE)
+                self.mouseJoint.set_drive(px.D6Drive.X,10000,0.1,100000,True)
+                self.mouseJoint.set_drive(px.D6Drive.Y,10000,0.1,100000,True)
+                self.mouseJoint.set_drive_position((0,0,0))
+                print("find")
+                print(i)
+                break
+            i+=1
+        self.mouseClickCnt+=1
+
+
+
 
     def MouseUp(self, p):
         """
         Left mouse button up.
         """
+        print("mouse up")
         if self.mouseJoint:
-            self.world.DestroyJoint(self.mouseJoint)
+            print("删除mouseJoint")
+            self.mouseJoint.release()
             self.mouseJoint = None
+            self.render.selectedIndex =None
 
     def MouseMove(self, p):
         """
         Mouse moved to point p, in world coordinates.
         """
-        self.mouseWorld = p
-        if self.mouseJoint:
-            self.mouseJoint.target = p
+        
+        loc = np.array([p[0],p[1], 0], dtype=np.float64)
+        self.aabb_actor.set_global_pose(loc)
+        # self.mouseActor.set_kinematic_target(loc)
+
