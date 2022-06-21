@@ -149,8 +149,8 @@ class Balancer:
 
             # 设置lane node Joints
             matrix = np.array([
-                [u_axis[0], -axis[1], 0],
-                [axis[1], u_axis[0], 0],
+                [u_axis[0], -u_axis[1], 0],
+                [u_axis[1], u_axis[0], 0],
                 [0, 0, 1]], dtype=self.dtype)
             q = quaternion.from_rotation_matrix(matrix)
             print(axis_len, u_axis, "q = ", q)
@@ -161,7 +161,7 @@ class Balancer:
 
             # joint.set_kinemic_projection(True, tolerance=0.1)
             # joint = px.D6Joint(v1, v2, (np.zeros_like(loc1), q), (np.zeros_like(loc2), q)) # local poses
-            # joint.set_linear_limit_soft
+            # TODO: joint.set_linear_limit_soft
             # TODO: joint.set_break_force
             # 设置车道actor
             lane_shape = px.Shape.create_box((axis_len-w, w, w), v_material, is_exclusive=False)

@@ -56,7 +56,7 @@ def lock_2d(actor):
     # of the axes defined by actor0's constraint frame. For example, unlocking just the X-axis creates the equivalent of
     # a prismatic joint.
     loc, pose = actor.get_global_pose()
-    joint = px.D6Joint(actor, loc)
+    joint = px.D6Joint(actor, (loc, pose), ((0., 0., 0.), pose))
     joint.set_motion(px.D6Axis.X, px.D6Motion.FREE)
     joint.set_motion(px.D6Axis.Y, px.D6Motion.FREE)
     joint.set_motion(px.D6Axis.SWING2, px.D6Motion.FREE)
