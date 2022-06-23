@@ -68,6 +68,16 @@ class ParkRender(object):
         return [(self.SCREEN_OFFSETX + self.PPM*v[0], self.SCREEN_OFFSETY - self.PPM*v[1]) for v in vertices]
         # return [(int(self.SCREEN_OFFSETX + self.PPM*(v[0]-self.viewCenter[0])), int(self.SCREEN_OFFSETY - self.PPM*(v[1]-self.viewCenter[1]))) for v in vertices]
 
+    def get_global_location(self,local_pos,pose):
+        # print(local_pos)
+        # p=quaternion.quaternion(0,local_pos[0],local_pos[1],local_pos[2])
+        w,a,b,c=quaternion.as_float_array(pose[1])
+        q=quaternion.quaternion(w,a,b,c)
+        m=quaternion.as_rotation_matrix(q)
+        x= np.dot(m,local_pos)+pose[0]
+        # print(x)
+        return x[0:2]
+
     def _draw_test(self, screen):
         # 测试：画一下定位点
         v = ([10, 10], [10, 20], [20, 20], [20, 10])
@@ -111,15 +121,17 @@ class ParkRender(object):
 
 
         global_pose = actor.get_global_pose()
-        offset_x = global_pose[0][0]
-        offset_y = global_pose[0][1]
-
         vs = box.get_box_half_extents()
-        origin_vertices = ([vs[0]+offset_x, vs[1]+offset_y],
-                           [vs[0]+offset_x, -vs[1]+offset_y],
-                           [-vs[0]+offset_x, -vs[1]+offset_y],
-                           [-vs[0]+offset_x, vs[1]+offset_y])
-        vertices = self.fix_vertices(origin_vertices)
+        origin_vertices=([vs[0],vs[1],vs[2]],
+                            [vs[0],-vs[1],vs[2]],
+                            [-vs[0],-vs[1],vs[2]],
+                            [-vs[0],vs[1],vs[2]])
+        vertices=[self.get_global_location(v,global_pose) for v in origin_vertices]
+        # origin_vertices = ([vs[0]+offset_x, vs[1]+offset_y],
+        #                    [vs[0]+offset_x, -vs[1]+offset_y],
+        #                    [-vs[0]+offset_x, -vs[1]+offset_y],
+        #                    [-vs[0]+offset_x, vs[1]+offset_y])
+        vertices = self.fix_vertices(vertices)
 
         # vertices=origin_vertices
         pygame.draw.polygon(
@@ -129,8 +141,8 @@ class ParkRender(object):
     def _draw_mesh(self, mesh, screen, actor, flag):
         
         global_pose = actor.get_global_pose()
-        offset_x = global_pose[0][0]
-        offset_y = global_pose[0][1]
+        
+
         # print("draw mesh-global:")
         # print(offset_x)
 
@@ -139,12 +151,13 @@ class ParkRender(object):
 
         for i in range(face_num):
             # print(faces[i])
-            v1 = (faces[i][0]+offset_x, faces[i][1]+offset_y)
-            v2 = (faces[i][3]+offset_x, faces[i][4]+offset_y)
-            v3 = (faces[i][6]+offset_x, faces[i][7]+offset_y)
+            v1 = (faces[i][0], faces[i][1],faces[i][2])
+            v2 = (faces[i][3], faces[i][4],faces[i][5])
+            v3 = (faces[i][6], faces[i][7],faces[i][8])
 
             origin_vertices = (v1, v2, v3)
-            vertices = self.fix_vertices(origin_vertices)
+            vertices=[self.get_global_location(v,global_pose) for v in origin_vertices]
+            vertices = self.fix_vertices(vertices)
             # vertices=origin_vertices
             # print(vertices)
             pygame.draw.polygon(screen, self.colors[flag], vertices, 1)

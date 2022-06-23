@@ -161,7 +161,7 @@ class Keys(object):
 
 
 class OldFramework(object):
-    name = 'TH'
+    name = 'THXXX'
     description = ''
     view_balancer=None
 

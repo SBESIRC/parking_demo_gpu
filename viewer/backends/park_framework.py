@@ -255,7 +255,7 @@ class ParkFramework(object):
             # Check keys that should be checked every loop (not only on initial
             # keydown)
             self.CheckKeys()
-            rate.frequency=self.settings.hz # FIXME:频率
+            # rate.frequency=self.settings.hz # FIXME:频率
             # Run the simulation loop
             # self.SimulationLoop()
             if GUIEnabled:
@@ -265,7 +265,7 @@ class ParkFramework(object):
                 self.view_balancer.update(0)    # PAUSE
             else:
                 self.view_balancer.update(rate.period())
-            print(self.settings.hz)
+            # print(self.settings.hz)
             # render！
             self.render.draw_scene(self.screen, self.view_balancer) 
 

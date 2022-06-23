@@ -128,6 +128,8 @@ class Balancer:
             lock_2d(v_actor)
             self.scene.add_actor(v_actor)
             self.vertices.append(v_actor)
+            if i==1:
+                break
         
         for e in lanes['edges']:
             v1 = self.vertices[int(e['endings'][0])]
@@ -135,6 +137,7 @@ class Balancer:
             # TODO: 是否能正常运行
             v1.get_user_data().adj += 1
             v2.get_user_data().adj += 1
+            break
 
         for e in lanes['edges']:
             v1 = self.vertices[int(e['endings'][0])]
@@ -192,6 +195,7 @@ class Balancer:
                 print("invalid shape:", loc1, loc2)
                 pass
                 # TODO: 节点太近的情况
+            break
 
     def __init__(self, outer_bound, wall, lane, config):
         super(Balancer, self).__init__()
@@ -211,7 +215,7 @@ class Balancer:
 
         self.__init_config__(config)
         # The obstacles
-        self.__init_obstacles__(outer_bound, wall)
+        # self.__init_obstacles__(outer_bound, wall)
         # The lane
         self.__init_lanes__(lane, config)
 
