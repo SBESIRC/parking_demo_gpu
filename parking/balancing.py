@@ -178,12 +178,12 @@ class Balancer:
                 # lock
                 lock_2d(lane_actor)
                 # lane_actor.set_linear_velocity(np.concatenate([(np.random.rand(2)-.5) * 20, [0]]))
-                lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), (-axis/4, q))
+                # lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), (-axis/4, q))
                 # lane_joint2 = px.D6Joint(v2, lane_actor, (np.zeros_like(loc2), q), (axis/4, q))
                 # TODO: 基本确定是joint冲突的问题
                 # lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), [-axis_len/2, 0, 0])
                 # lane_joint2 = px.D6Joint(v2, lane_actor, (np.zeros_like(loc2), q), [axis_len/2, 0, 0])
-                lane_joint1.set_motion(px.D6Axis.X, px.D6Motion.FREE)
+                # lane_joint1.set_motion(px.D6Axis.X, px.D6Motion.FREE)
                 # lane_joint2.set_motion(px.D6Axis.X, px.D6Motion.FREE)
 
                 # lane_joint1.set_kinemic_projection(True, tolerance=1)
