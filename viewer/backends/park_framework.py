@@ -53,7 +53,7 @@ from .park_render import ParkRender
 
 TARGET_FPS = 60
 # PPM = 2.0  # scale
-SCREEN_WIDTH, SCREEN_HEIGHT = 800, 600
+SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 900
 TIMESTEP = 1.0 / TARGET_FPS
 VEL_ITERS, POS_ITERS = 10, 10
 
@@ -102,6 +102,7 @@ class ParkFramework(object):
         self.mouseActor.set_user_data(mouse_data)
         # self.mouseActor.set_rigid_body_flag(px.RigidBodyFlag.KINEMATIC, True)
         self.view_balancer.scene.add_actor(self.mouseActor)
+        lock_2d(self.mouseActor)
 
         self.selectedActor = None
         self.mouseClickCnt = 0  # 左键点击计数
@@ -413,8 +414,8 @@ class ParkFramework(object):
                 self.mouseJoint.set_motion(px.D6Axis.SWING1, px.D6Motion.FREE)
                 self.mouseJoint.set_motion(px.D6Axis.SWING2, px.D6Motion.FREE)
                 self.mouseJoint.set_motion(px.D6Axis.TWIST, px.D6Motion.FREE)
-                self.mouseJoint.set_drive(px.D6Drive.X,10000,0.1,100000,True)
-                self.mouseJoint.set_drive(px.D6Drive.Y,10000,0.1,100000,True)
+                self.mouseJoint.set_drive(px.D6Drive.X,1000000,0,10000000,True)
+                self.mouseJoint.set_drive(px.D6Drive.X,1000000,0,10000000,True)
                 self.mouseJoint.set_drive_position((0,0,0))
                 print("find")
                 print(i)
@@ -443,5 +444,8 @@ class ParkFramework(object):
         
         loc = np.array([p[0],p[1], 0], dtype=np.float64)
         self.aabb_actor.set_global_pose(loc)
+        self.mouseActor.set_global_pose(loc)
+        if self.mouseJoint:
+            self.mouseJoint.set_drive_position((0,0,0))
         # self.mouseActor.set_kinematic_target(loc)
 

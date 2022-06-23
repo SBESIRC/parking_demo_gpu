@@ -75,15 +75,15 @@ class Balancer:
                 sz = np.linalg.norm(np.cross(pts[1]-pts[0], pts[2]-pts[0]))
                 tot += sz
                 Sum += sz * np.mean(pts, axis=0)
-            shape = createStringShape(self, coords[::-1], material, is_polygon=True)
-            shape.setup_simulation_filtering(FilterType.Bound.value, ~(FilterType.Bound.value))
-            bounds.attach_shape(shape)
+                shape = createStringShape(self, coords[i:i+2][::-1], material, is_polygon=False)
+                shape.setup_simulation_filtering(FilterType.Bound.value, ~(FilterType.Bound.value))
+                bounds.attach_shape(shape)
         self.centroid = Sum / tot
         self.scene.add_actor(bounds)
 
-        land = px.RigidStatic.create_plane(material=material, distance=wall_height)
-        land.set_global_pose((self.centroid, quaternion.quaternion(0, 1, 0, 1)))
-        self.scene.add_actor(land)
+        #land = px.RigidStatic.create_plane(material=material, distance=wall_height)
+        #land.set_global_pose((self.centroid, quaternion.quaternion(0, 1, 0, 1)))
+        #self.scene.add_actor(land)
 
         # walls
         # TODO: walls do not have userData
@@ -128,8 +128,6 @@ class Balancer:
             lock_2d(v_actor)
             self.scene.add_actor(v_actor)
             self.vertices.append(v_actor)
-            if i==1:
-                break
         
         for e in lanes['edges']:
             v1 = self.vertices[int(e['endings'][0])]
@@ -137,7 +135,6 @@ class Balancer:
             # TODO: 是否能正常运行
             v1.get_user_data().adj += 1
             v2.get_user_data().adj += 1
-            break
 
         for e in lanes['edges']:
             v1 = self.vertices[int(e['endings'][0])]
@@ -180,13 +177,13 @@ class Balancer:
                 # TODO: filtering未起作用
                 # lock
                 lock_2d(lane_actor)
-                lane_actor.set_linear_velocity(np.concatenate([(np.random.rand(2)-.5) * 20, [0]]))
-                # lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), (-axis/4, q))
+                # lane_actor.set_linear_velocity(np.concatenate([(np.random.rand(2)-.5) * 20, [0]]))
+                lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), (-axis/4, q))
                 # lane_joint2 = px.D6Joint(v2, lane_actor, (np.zeros_like(loc2), q), (axis/4, q))
                 # TODO: 基本确定是joint冲突的问题
                 # lane_joint1 = px.D6Joint(v1, lane_actor, (np.zeros_like(loc1), q), [-axis_len/2, 0, 0])
                 # lane_joint2 = px.D6Joint(v2, lane_actor, (np.zeros_like(loc2), q), [axis_len/2, 0, 0])
-                # lane_joint1.set_motion(px.D6Axis.X, px.D6Motion.FREE)
+                lane_joint1.set_motion(px.D6Axis.X, px.D6Motion.FREE)
                 # lane_joint2.set_motion(px.D6Axis.X, px.D6Motion.FREE)
 
                 # lane_joint1.set_kinemic_projection(True, tolerance=1)
@@ -195,7 +192,6 @@ class Balancer:
                 print("invalid shape:", loc1, loc2)
                 pass
                 # TODO: 节点太近的情况
-            break
 
     def __init__(self, outer_bound, wall, lane, config):
         super(Balancer, self).__init__()
@@ -215,7 +211,7 @@ class Balancer:
 
         self.__init_config__(config)
         # The obstacles
-        # self.__init_obstacles__(outer_bound, wall)
+        self.__init_obstacles__(outer_bound, wall)
         # The lane
         self.__init_lanes__(lane, config)
 
